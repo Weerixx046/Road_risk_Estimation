@@ -8,7 +8,6 @@ import torch
 from PIL import Image
 from torchvision import transforms
 import gdown
-
 app = FastAPI()
 
 # เปิด CORS เพื่อให้หน้าเว็บยิง API ข้ามมากลางคันได้
@@ -34,7 +33,7 @@ if not os.path.exists(MODEL_PATH):
     print("✅ ดาวน์โหลดโมเดลสำเร็จ!")
 
 # โหลดโมเดล ResNet-50 ที่ดาวน์โหลดมาเสร็จแล้วมารอไว้
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+device = torch.device("cpu")
 model = timm.create_model("resnet50", pretrained=False, num_classes=1)
 model.load_state_dict(
     torch.load(MODEL_PATH, map_location=device)
