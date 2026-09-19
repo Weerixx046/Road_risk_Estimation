@@ -1,0 +1,17 @@
+# Python Virtual Environment
+venv/
+env/
+__pycache__/
+*.pyc
+
+# ไฟล์โมเดลขนาดใหญ่และโฟลเดอร์ข้อมูล
+resnet50_road_risk.pth
+backEnd/models/*.pth
+data/
+
+# ไฟล์ตั้งค่าลับ
+.env
+
+# ระบบปฏิบัติการ
+.DS_Store
+Thumbs.db

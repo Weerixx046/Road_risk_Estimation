@@ -1,0 +1,17 @@
+# --- Web Framework & Server ---
+fastapi>=0.100.0
+uvicorn>=0.22.0
+python-multipart>=0.0.6
+
+# --- AI / Deep Learning / Image Processing ---
+torch>=2.0.0
+torchvision>=0.15.0
+timm>=0.9.0
+albumentations>=1.3.0
+opencv-python>=4.7.0
+pillow>=9.5.0
+
+# --- Data & Utilities (ถ้าจำเป็นต้องใช้ประมวลผลข้อมูลเพิ่มเติม) ---
+pandas>=2.0.0
+scikit-learn>=1.2.0
+matplotlib>=3.7.0
