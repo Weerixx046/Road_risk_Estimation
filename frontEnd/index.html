@@ -102,7 +102,7 @@
 
             try {
                 // เปลี่ยนมาใช้ URL เต็ม เพื่อให้ยิงไปที่ FastAPI ได้ถูกต้อง แม้จะเปิดไฟล์ html ตรงๆ
-                const response = await fetch('http://127.0.0.1:8000/api/predict', {
+                const response = await fetch('/api/predict', {
                     method: 'POST',
                     body: formData
                 });
