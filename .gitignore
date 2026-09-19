@@ -6,6 +6,7 @@ __pycache__/
 
 # ไฟล์โมเดลขนาดใหญ่และโฟลเดอร์ข้อมูล
 resnet50_road_risk.pth
+backEnd/models/*.pth
 data/
 
 # ไฟล์ตั้งค่าลับ
