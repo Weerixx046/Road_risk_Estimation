@@ -6,6 +6,8 @@
     <title>Road Risk Assessment | ระบบประเมินความเสี่ยงถนน</title>
     <!-- โหลด Tailwind CSS สำหรับแต่งเว็บและทำ Responsive -->
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <!-- โหลด ONNX Runtime Web สำหรับรันโมเดลบนเครื่องผู้ใช้ (Client-side Inference) -->
+    <script src="https://cdn.jsdelivr.net/npm/onnxruntime-web/dist/ort.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'Prompt', sans-serif; }
@@ -17,9 +19,9 @@
     <header class="bg-white shadow-sm py-4 px-6">
         <div class="max-w-4xl mx-auto flex justify-between items-center">
             <h1 class="text-xl font-bold text-blue-600 flex items-center gap-2">
-                <span>🚗</span> Road Risk AI
+                <span>🚗</span> Road Risk AI (Client-Side)
             </h1>
-            <span class="text-xs bg-blue-100 text-blue-700 font-medium px-3 py-1 rounded-full">ระบบวิเคราะห์ความเสี่ยงถนน</span>
+            <span id="modelStatus" class="text-xs bg-amber-100 text-amber-700 font-medium px-3 py-1 rounded-full">⏳ กำลังดาวน์โหลดโมเดลจาก Host...</span>
         </div>
     </header>
 
@@ -28,7 +30,7 @@
         <div class="bg-white rounded-2xl shadow-xl p-6 sm:p-8 border border-slate-100">
             <div class="text-center mb-6">
                 <h2 class="text-2xl font-bold text-slate-900 mb-2">ตรวจสอบความเสี่ยงถนน</h2>
-                <p class="text-sm text-slate-500">อัปโหลดรูปถ่ายถนนเพื่อประเมินคะแนนความเสี่ยงด้วยโมเดล AI (ResNet-50)</p>
+                <p class="text-sm text-slate-500">ประมวลผลด้วยโมเดล AI (ResNet-50) บนเครื่องของคุณเอง 100%</p>
             </div>
 
             <!-- Upload Box -->
@@ -40,19 +42,19 @@
                     <p class="text-sm font-medium text-slate-700">คลิกเพื่ออัปโหลดรูปภาพ หรือลากไฟล์มาวางที่นี่</p>
                     <p class="text-xs text-slate-400 mt-1">รองรับไฟล์ JPG, PNG</p>
                 </div>
-                <!-- ส่วนแสดงตัวอย่างรูปภาพ (ซ่อนไว้ก่อนจนกว่าจะเลือกรูป) -->
+                <!-- ส่วนแสดงตัวอย่างรูปภาพ -->
                 <img id="imagePreview" class="hidden max-h-64 rounded-lg object-contain shadow-sm" alt="Preview">
-                <input type="file" id="imageUpload" accept="image/*" class="hidden" onchange="previewImage(event)">
+                <input type="file" id="imageUpload" accept="image/*" class="hidden" onchange="previewImage(event)" disabled>
             </label>
 
             <!-- Submit Button -->
-            <button onclick="predictImage()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-4 rounded-xl shadow-lg shadow-blue-500/25 transition-all flex items-center justify-center gap-2 cursor-pointer">
-                <span>🔍 วิเคราะห์ความเสี่ยง</span>
+            <button id="predictBtn" onclick="predictImage()" disabled class="w-full bg-slate-300 text-slate-500 font-medium py-3 px-4 rounded-xl shadow-sm transition-all flex items-center justify-center gap-2 cursor-not-allowed">
+                <span>🔍 กำลังรอโหลดโมเดล...</span>
             </button>
 
             <!-- Result Section (ซ่อนไว้ก่อนรอผลลัพธ์) -->
             <div id="resultSection" class="hidden mt-6 p-6 rounded-xl bg-slate-50 border border-slate-200 text-center animate-fadeIn">
-                <p class="text-sm text-slate-500 mb-1">คะแนนความเสี่ยงที่ประเมินได้</p>
+                <p class="text-sm text-slate-500 mb-1">คะแนนความเสี่ยงที่ประเมินได้ (รันบนเครื่องของคุณ)</p>
                 <div class="text-4xl font-extrabold text-blue-600 mb-2" id="scoreValue">-- / 100</div>
                 <div id="riskBadge" class="inline-block px-4 py-1 rounded-full text-xs font-semibold">--</div>
             </div>
@@ -64,9 +66,42 @@
         &copy; 2026 Road Risk AI Project. All rights reserved.
     </footer>
 
-    <!-- JavaScript สำหรับควบคุมการแสดงผลหน้าเว็บ -->
+    <!-- JavaScript สำหรับโหลดโมเดลจาก Host และรันประมวลผลบนเครื่องผู้ใช้ -->
     <script>
-        // ฟังก์ชันแสดงตัวอย่างรูปภาพเมื่อผู้ใช้อัปโหลด
+        let session = null;
+        let selectedFile = null;
+
+        // โหลดโมเดล .onnx จาก Host มาไว้ที่หน่วยความจำเบราว์เซอร์ของผู้ใช้ทันทีที่เปิดเว็บ
+        async function loadModelFromHost() {
+            try {
+                console.log("⏳ กำลังดาวน์โหลดโมเดลจาก Host...");
+                // ดึงไฟล์โมเดลผ่าน API ที่เตรียมไว้หลังบ้าน
+                session = await ort.InferenceSession.create('/api/model', { executionProviders: ['wasm'] });
+                
+                // อัปเดตสถานะเมื่อพร้อมใช้งาน
+                const statusBadge = document.getElementById('modelStatus');
+                statusBadge.className = "text-xs bg-emerald-100 text-emerald-700 font-medium px-3 py-1 rounded-full";
+                statusBadge.innerText = "✅ พร้อมใช้งาน (รันบนเครื่องคุณ)";
+
+                const predictBtn = document.getElementById('predictBtn');
+                predictBtn.disabled = false;
+                predictBtn.className = "w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-4 rounded-xl shadow-lg shadow-blue-500/25 transition-all flex items-center justify-center gap-2 cursor-pointer";
+                predictBtn.innerHTML = "<span>🔍 วิเคราะห์ความเสี่ยง</span>";
+
+                document.getElementById('imageUpload').disabled = false;
+                console.log("✅ โหลดโมเดลลงเครื่องสำเร็จ!");
+            } catch (error) {
+                console.error("❌ โหลดโมเดลไม่สำเร็จ:", error);
+                const statusBadge = document.getElementById('modelStatus');
+                statusBadge.className = "text-xs bg-rose-100 text-rose-700 font-medium px-3 py-1 rounded-full";
+                statusBadge.innerText = "❌ โหลดโมเดลไม่สำเร็จ";
+            }
+        }
+
+        // เริ่มโหลดโมเดลทันทีเมื่อหน้าเว็บโหลดเสร็จ
+        window.addEventListener('DOMContentLoaded', loadModelFromHost);
+
+        // ฟังก์ชันแสดงตัวอย่างรูปภาพ
         function previewImage(event) {
             const reader = new FileReader();
             const imagePreview = document.getElementById('imagePreview');
@@ -79,38 +114,63 @@
             }
             
             if(event.target.files[0]) {
-                reader.readAsDataURL(event.target.files[0]);
+                selectedFile = event.target.files[0];
+                reader.readAsDataURL(selectedFile);
             }
         }
 
-        // ฟังก์ชันจำลองการทำนายผล (เอาไว้เชื่อมต่อกับ Backend ของจริงทีหลัง)
-        // ฟังก์ชันส่งรูปไปให้ FastAPI ทำนายผล
+        // ฟังก์ชันประมวลผลภาพ (Predict) บนเครื่องของผู้ใช้เอง
         async function predictImage() {
-            const imageInput = document.getElementById('imageUpload');
-            if(imageInput.files.length === 0) {
+            if (!selectedFile) {
                 alert('กรุณาอัปโหลดรูปภาพก่อนทำการวิเคราะห์!');
                 return;
             }
 
-            const file = imageInput.files[0];
-            const formData = new FormData();
-            formData.append('file', file); // ต้องตรงกับตัวแปร file ใน FastAPI
+            if (!session) {
+                alert('โมเดลยังไม่พร้อมใช้งาน กรุณารอสักครู่...');
+                return;
+            }
 
-            // แสดงสถานะกำลังโหลด
-            document.getElementById('scoreValue').innerText = "กำลังประมวลผล...";
+            // แสดงสถานะกำลังคำนวณ
+            document.getElementById('scoreValue').innerText = "กำลังประมวลผลบนเครื่องคุณ...";
             document.getElementById('resultSection').classList.remove('hidden');
 
             try {
-                // เปลี่ยนมาใช้ URL เต็ม เพื่อให้ยิงไปที่ FastAPI ได้ถูกต้อง แม้จะเปิดไฟล์ html ตรงๆ
-                const response = await fetch('/api/predict', {
-                    method: 'POST',
-                    body: formData
-                });
+                const img = new Image();
+                img.src = URL.createObjectURL(selectedFile);
+                
+                img.onload = async function() {
+                    // 1. ปรับขนาดภาพเป็น 224x224 ด้วย Canvas ของเบราว์เซอร์
+                    const canvas = document.createElement('canvas');
+                    canvas.width = 224;
+                    canvas.height = 224;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, 224, 224);
+                    
+                    const imgData = ctx.getImageData(0, 0, 224, 224);
+                    const { data } = imgData;
 
-                const data = await response.json();
+                    // 2. ทำ Preprocessing แปลงพิกเซลและ Normalize ค่าตาม ResNet-50
+                    // Mean: [0.485, 0.456, 0.406], Std: [0.229, 0.224, 0.225]
+                    const float32Data = new Float32Array(3 * 224 * 224);
+                    for (let i = 0; i < 224 * 224; i++) {
+                        let r = data[i * 4] / 255.0;
+                        let g = data[i * 4 + 1] / 255.0;
+                        let b = data[i * 4 + 2] / 255.0;
 
-                if(data.success) {
-                    const score = data.risk_score;
+                        float32Data[i] = (r - 0.485) / 0.229;
+                        float32Data[i + 224 * 224] = (g - 0.456) / 0.224;
+                        float32Data[i + 2 * 224 * 224] = (b - 0.406) / 0.225;
+                    }
+
+                    // 3. สร้าง Tensor และรันโมเดลด้วย ONNX Runtime Web บนเครื่องผู้ใช้
+                    const inputTensor = new ort.Tensor('float32', float32Data, [1, 3, 224, 224]);
+                    const results = await session.run({ input: inputTensor });
+                    
+                    // ดึงค่าผลลัพธ์คะแนนความเสี่ยง
+                    const score = Number(results.output.data[0]).toFixed(2);
+
+                    // 4. แสดงผลลัพธ์ลงหน้าจอ
                     document.getElementById('scoreValue').innerText = `${score} / 100`;
                     
                     const badge = document.getElementById('riskBadge');
@@ -124,14 +184,13 @@
                         badge.className = "inline-block px-4 py-1 rounded-full text-xs font-semibold bg-rose-100 text-rose-700";
                         badge.innerText = "🔴 ความเสี่ยงสูง (ถนนชำรุดอันตราย)";
                     }
-                }
+                };
             } catch (error) {
-                console.error('Error:', error);
-                alert('เกิดข้อผิดพลาดในการเชื่อมต่อกับเซิร์ฟเวอร์ AI (ตรวจสอบว่ารัน FastAPI อยู่หรือยัง)');
+                console.error('Error during prediction:', error);
+                alert('เกิดข้อผิดพลาดในการประมวลผลบนเครื่องของคุณ');
                 document.getElementById('scoreValue').innerText = "-- / 100";
             }
-        
-    }
+        }
     </script>
 </body>
 </html>
