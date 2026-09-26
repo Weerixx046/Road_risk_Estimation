@@ -174,15 +174,27 @@
                     document.getElementById('scoreValue').innerText = `${score} / 100`;
                     
                     const badge = document.getElementById('riskBadge');
-                    if (score < 30) {
+                    if (score <= 14) {
                         badge.className = "inline-block px-4 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-700";
-                        badge.innerText = "🟢 ความเสี่ยงต่ำ (ถนนปกติ)";
-                    } else if (score < 70) {
+                        badge.innerText = "Level A: ความเสี่ยงต่ำมาก (ถนนปกติ)";
+                    } else if (score <= 30) {
+                        badge.className = "inline-block px-4 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-700";
+                        badge.innerText = "Level B: ความเสี่ยงต่ำ (เริ่มมีรอยตำหนิเล็กน้อย)";
+                    } else if (score <= 40) {
                         badge.className = "inline-block px-4 py-1 rounded-full text-xs font-semibold bg-amber-100 text-amber-700";
-                        badge.innerText = "🟡 ความเสี่ยงปานกลาง (ควรระมัดระวัง)";
-                    } else {
+                        badge.innerText = "Level C: ความเสี่ยงปานกลาง (พบความเสียหายเริ่มเด่นชัด)";
+                    } else if (score <= 50) {
+                        badge.className = "inline-block px-4 py-1 rounded-full text-xs font-semibold bg-orange-100 text-orange-700";
+                        badge.innerText = "Level D: ความเสี่ยงค่อนข้างสูง (ถนนชำรุดควรเฝ้าระวัง)";
+                    } else if (score <= 65) {
                         badge.className = "inline-block px-4 py-1 rounded-full text-xs font-semibold bg-rose-100 text-rose-700";
-                        badge.innerText = "🔴 ความเสี่ยงสูง (ถนนชำรุดอันตราย)";
+                        badge.innerText = "Level F (รุนแรงน้อย): ความเสี่ยงสูง - พบหลุมบ่อหรือรอยแตกเริ่มลุกลาม";
+                    } else if (score <= 80) {
+                        badge.className = "inline-block px-4 py-1 rounded-full text-xs font-semibold bg-red-200 text-red-800";
+                        badge.innerText = "Level F (รุนแรงมาก): ความเสี่ยงสูงมาก - พื้นผิวเสียหายหนัก เกิดความเสี่ยงต่ออุบัติเหตุ";
+                    } else {
+                        badge.className = "inline-block px-4 py-1 rounded-full text-xs font-semibold bg-red-300 text-red-900";
+                        badge.innerText = "Level F (วิกฤต): ความเสี่ยงสูงสุด - ถนนชำรุดทรุดตัวรุนแรงต้องปิดปรับปรุงเร่งด่วน";
                     }
                 };
             } catch (error) {
