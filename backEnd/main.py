@@ -7,7 +7,7 @@ import timm
 import torch
 from torchvision import transforms
 import gdown
-
+import torch.nn as nn
 app = FastAPI()
 
 app.add_middleware(
@@ -21,7 +21,7 @@ app.add_middleware(
 MODEL_DIR = "models"
 MODEL_PATH = os.path.join(MODEL_DIR, "resnet50_road_risk.pth1")
 ONNX_PATH = os.path.join(MODEL_DIR, "resnet50_road_risk.onnx")
-GOOGLE_DRIVE_FILE_ID = "11Vff0R2iX3i2Z3JneXSYMY42Tr7mvwvr"
+GOOGLE_DRIVE_FILE_ID = "1CftNKCFhWPao8o-CjvfHcA9YhkFID6aS"
 os.makedirs(MODEL_DIR, exist_ok=True)
 
 # 1. โหลดโมเดลจาก Google Drive มาเก็บไว้ที่ Host (ถ้ายังไม่มี)
@@ -35,8 +35,15 @@ if not os.path.exists(MODEL_PATH):
 if not os.path.exists(ONNX_PATH):
     print("⏳ กำลังแปลงโมเดลเป็น ONNX (แบบรวมไฟล์เดียว)...")
     device = torch.device("cpu")
-    model = timm.create_model("resnet50", pretrained=False, num_classes=1)
-    model.load_state_dict(torch.load(MODEL_PATH, map_location=device))
+    model = timm.create_model("resnet50", pretrained=False, num_classes=0)
+    model.fc = nn.Sequential(
+        nn.Flatten(),
+        nn.Dropout(p=0.4),
+        nn.Linear(model.num_features, 1)
+    )
+    
+    # โหลดน้ำหนักเข้าไป (ใช้ weights_only=False เพื่อป้องกัน Error ใน PyTorch เวอร์ชันใหม่)
+    model.load_state_dict(torch.load(MODEL_PATH, map_location=device, weights_only=False))
     model.eval()
 
     dummy_input = torch.randn(1, 3, 224, 224)
@@ -56,7 +63,7 @@ if not os.path.exists(ONNX_PATH):
 # ส่งหน้าเว็บ HTML
 @app.get("/")
 async def read_index():
-    return FileResponse("frontEnd/index.html")
+    return FileResponse("../frontEnd/index.html")
 
 # ส่งไฟล์โมเดล (.onnx) ที่เก็บอยู่บน Host ให้เบราว์เซอร์ของผู้ใช้ดาวน์โหลดไปรันที่เครื่องตัวเอง
 @app.get("/api/model")
