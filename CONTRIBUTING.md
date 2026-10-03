@@ -1,76 +1,76 @@
-# Road Risk Estimation Dataset
+# Contributing to UMA Road Risk Estimation
 
-**Version:** v1.0
-**Created:** September 2026
-**Institution:** Kasetsart University
+## Getting Started
 
----
+Clone the repository to your local machine:
 
-## 1. Dataset Description
-
-This dataset contains images of road surfaces used for the **Road Risk Estimation AI** project. The model (**ResNet-50**) analyzes these images to predict a risk score indicating the severity of road damage.
-
-* **Number of images:** 9,173
-* **Target Output:** Regression (Risk Score 0–100)
-* **Image Format:** JPG / PNG
-* **Image Size:** 224 × 224 pixels (RGB)
-
----
-
-## 2. Risk Level Categories
-
-Although the model predicts a continuous score from 0 to 100, the final results are grouped into the following risk levels for user display:
-
-| Level |   Score Range  | Description                                  |
-| :---: | :------------: | -------------------------------------------- |
-| **A** |  0.00 – 14.00  | Very Low Risk (Normal road condition)        |
-| **B** |  14.01 – 30.00 | Low Risk (Minor defects)                     |
-| **C** |  30.01 – 40.00 | Moderate Risk (Visible damage)               |
-| **D** |  40.01 – 50.00 | High Risk (Requires monitoring)              |
-| **F** | 50.01 – 100.00 | Critical Risk (Severe damage, urgent repair) |
-
----
-
-## 3. Dataset Structure
-
-```text
-dataset/
-├── test_data/
-├── train_data/
-├── val_data/
-├── test_split.csv
-├── train_dataset_final.csv
-├── train_split.csv
-└── val_split.csv
+```bash
+git clone https://github.com/Weerixx046/Road_risk_Estimation.git
+cd Road_risk_Estimation
 ```
 
----
+## Development Setup
 
-## 4. Data Source
+Create a Python virtual environment:
 
-Images were collected from two main sources: locally within the **Kamphaeng Saen Campus** and from various online platforms.
+```bash
+python -m venv venv
+```
 
-This combination ensures diversity in lighting, road types, and damage severity.
+Activate the virtual environment:
 
----
+**Windows:**
 
-## 5. Annotation
+```bash
+venv\Scripts\activate
+```
 
-* Ground truth risk scores (0–100) were annotated by project group members.
-* Scoring is based on standard **Road Safety Assessment (RSA)** guidelines.
+Install the required dependencies:
 
----
+```bash
+pip install -r requirements.txt
+```
 
-## 6. Recommended Data Split
+## Download the Model
 
-| Subset         | Percentage |
-| :------------- | ---------: |
-| **Training**   |        80% |
-| **Validation** |        10% |
-| **Testing**    |        10% |
+Before running the application, download the required model files and place them in the `models` directory.
 
----
+The project structure should look like:
 
-## 7. Contact
+```text
+Road_risk_Estimation/
+├── backEnd/
+├── models/
+│   └── <model-file>
+├── requirements.txt
+└── ...
+```
 
-**GitHub:** https://github.com/Weerixx046
+> **Note:** The application requires the model files in the `models` directory to run correctly.
+
+## Running the Application
+
+Navigate to the `backEnd` directory:
+
+```bash
+cd backEnd
+```
+
+Start the application using Uvicorn:
+
+```bash
+uvicorn main:app --reload
+```
+
+After the server starts, the application will be available at:
+
+* **Web API:** http://127.0.0.1:8000
+* **Swagger UI:** http://127.0.0.1:8000/docs
+
+The Swagger UI can be used to view and test the available API endpoints.
+
+## Code Style
+
+The project follows standard Python coding conventions based on **PEP 8**.
+
+Please keep the code clean, readable, and properly commented where necessary.
