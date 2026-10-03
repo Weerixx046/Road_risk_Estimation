@@ -65,9 +65,9 @@ This combination ensures diversity in lighting, road types, and damage severity.
 
 | Subset         | Percentage |
 | :------------- | ---------: |
-| **Training**   |        70% |
-| **Validation** |        15% |
-| **Testing**    |        15% |
+| **Training**   |        80% |
+| **Validation** |        10% |
+| **Testing**    |        10% |
 
 ---
 
