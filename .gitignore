@@ -5,8 +5,7 @@ __pycache__/
 *.pyc
 
 # ไฟล์โมเดลขนาดใหญ่และโฟลเดอร์ข้อมูล
-resnet50_road_risk.pth
-models/
+models/resnet50_road_risk.pt
 data/
 
 # ไฟล์ตั้งค่าลับ
