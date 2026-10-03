@@ -1,15 +1,18 @@
-import os
-import io
 from fastapi import FastAPI, File, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse, JSONResponse
+from fastapi.responses import FileResponse
+import io
 import timm
 import torch
+import torch.nn as nn  # เพิ่ม import ตัวนี้สำหรับสร้าง Custom Head
+from PIL import Image
 from torchvision import transforms
-import gdown
-import torch.nn as nn
+
+MODEL_DIR = "../models/resnet50_road_risk.pt"
+FONT_END_DIR = "../frontEnd/index.html"
 app = FastAPI()
 
+# เปิด CORS เพื่อให้หน้าเว็บยิง API ข้ามมากลางคันได้
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -18,56 +21,51 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-MODEL_DIR = "models"
-MODEL_PATH = os.path.join(MODEL_DIR, "resnet50_road_risk.pth1")
-ONNX_PATH = os.path.join(MODEL_DIR, "resnet50_road_risk.onnx")
-GOOGLE_DRIVE_FILE_ID = "1CftNKCFhWPao8o-CjvfHcA9YhkFID6aS"
-os.makedirs(MODEL_DIR, exist_ok=True)
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-# 1. โหลดโมเดลจาก Google Drive มาเก็บไว้ที่ Host (ถ้ายังไม่มี)
-if not os.path.exists(MODEL_PATH):
-    print("⏳ กำลังดาวน์โหลดไฟล์โมเดลจาก Google Drive ลง Host...")
-    url = f"https://drive.google.com/uc?id={GOOGLE_DRIVE_FILE_ID}"
-    gdown.download(url, MODEL_PATH, quiet=False)
-    print("✅ ดาวน์โหลดโมเดลลง Host สำเร็จ!")
+# 1. โหลดโครงสร้างโมเดลให้ตรงกับตอนเทรน
+model = timm.create_model("resnet50", pretrained=False, num_classes=0)
+model.fc = nn.Sequential(
+    nn.Flatten(),
+    nn.Dropout(p=0.4),
+    nn.Linear(model.num_features, 1)
+)
 
-# 2. แปลงไฟล์ .pth บน Host ให้เป็น .onnx เพื่อให้เบราว์เซอร์นำไปรันบนเครื่องผู้ใช้ได้
-if not os.path.exists(ONNX_PATH):
-    print("⏳ กำลังแปลงโมเดลเป็น ONNX (แบบรวมไฟล์เดียว)...")
-    device = torch.device("cpu")
-    model = timm.create_model("resnet50", pretrained=False, num_classes=0)
-    model.fc = nn.Sequential(
-        nn.Flatten(),
-        nn.Dropout(p=0.4),
-        nn.Linear(model.num_features, 1)
-    )
-    
-    # โหลดน้ำหนักเข้าไป (ใช้ weights_only=False เพื่อป้องกัน Error ใน PyTorch เวอร์ชันใหม่)
-    model.load_state_dict(torch.load(MODEL_PATH, map_location=device, weights_only=False))
-    model.eval()
+# 2. โหลดน้ำหนักเข้าไป (เพิ่ม weights_only=False ป้องกัน Error ใน PyTorch เวอร์ชันใหม่)
+model.load_state_dict(
+    torch.load(MODEL_DIR, map_location=device, weights_only=False)
+)
+model.to(device)
+model.eval()
 
-    dummy_input = torch.randn(1, 3, 224, 224)
-    
-    # เพิ่มการบังคับ export แบบไม่แยก external data (เก็บบันทึกในไฟล์เดียว)
-    torch.onnx.export(
-        model, 
-        dummy_input, 
-        ONNX_PATH, 
-        input_names=['input'], 
-        output_names=['output'],
-        export_params=True,
-        do_constant_folding=True,
-        dynamo=False # บังคับใช้ exporter ตัวเก่าเพื่อไม่ให้แยกไฟล์ data
-    )
-    print("✅ แปลงโมเดลเป็น ONNX สำเร็จ!")
-# ส่งหน้าเว็บ HTML
+# Transform สำหรับรูปที่จะเอามาทาย
+transform = transforms.Compose([
+    transforms.Resize((224, 224)),
+    transforms.ToTensor(),
+    transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+])
+
+# รับ Request หน้าเว็บ
 @app.get("/")
 async def read_index():
-    return FileResponse("../frontEnd/index.html")
+    # ปรับ Path ให้เป็นการรันจาก Root Directory
+    return FileResponse(FONT_END_DIR)
 
-# ส่งไฟล์โมเดล (.onnx) ที่เก็บอยู่บน Host ให้เบราว์เซอร์ของผู้ใช้ดาวน์โหลดไปรันที่เครื่องตัวเอง
-@app.get("/api/model")
-async def get_model():
-    if os.path.exists(ONNX_PATH):
-        return FileResponse(ONNX_PATH, media_type="application/octet-stream", filename="resnet50_road_risk.onnx")
-    return JSONResponse({"success": False, "error": "Model not found on host"}, status_code=404)
+# รับไฟล์จากหน้าบ้านเพื่อประเมินความเสี่ยง
+@app.post("/api/predict")
+async def predict_risk(file: UploadFile = File(...)):
+    # อ่านไฟล์ภาพที่ผู้ใช้อัปโหลดเข้ามา
+    contents = await file.read()
+    image = Image.open(io.BytesIO(contents)).convert("RGB")
+
+    # แปลงภาพเป็น Tensor แล้วยิงเข้าโมเดล
+    image_tensor = transform(image).unsqueeze(0).to(device)
+
+    with torch.no_grad():
+        output = model(image_tensor)
+        score = float(output.squeeze().item())
+
+    # ปัดเศษทศนิยม
+    score = round(score, 2)
+
+    return {"success": True, "filename": file.filename, "risk_score": score}
