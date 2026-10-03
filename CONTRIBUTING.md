@@ -11,11 +11,13 @@ cd Road_risk_Estimation
 
 ## Development Setup
 
-Create and activate a Python virtual environment:
+Create a Python virtual environment:
 
 ```bash
 python -m venv venv
 ```
+
+Activate the virtual environment:
 
 **Windows:**
 
@@ -28,6 +30,23 @@ Install the required dependencies:
 ```bash
 pip install -r requirements.txt
 ```
+
+## Download the Model
+
+Before running the application, download the required model files and place them in the `models` directory.
+
+The project structure should look like:
+
+```text
+Road_risk_Estimation/
+├── backEnd/
+├── models/
+│   └── <model-file>
+├── requirements.txt
+└── ...
+```
+
+> **Note:** The application requires the model files in the `models` directory to run correctly.
 
 ## Running the Application
 
