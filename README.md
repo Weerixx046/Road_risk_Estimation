@@ -52,11 +52,15 @@ This diversity is intended to improve the model's ability to generalize to diffe
 
 ## 3. Dataset Structure
 
-The dataset consists of road surface images accompanied by their corresponding road risk scores.
+The dataset consists of **road surface images** accompanied by their corresponding **road risk scores**.
 
-Each image represents a road condition that is assigned a continuous risk score between **0 and 100**.
+Each image represents a road condition and is assigned a continuous **risk score ranging from 0 to 100**.
 
-The dataset is intended for a **regression problem**, where the model predicts a numerical risk score rather than a discrete class.
+The dataset is designed for a **regression problem**, where the model predicts a numerical risk score rather than a discrete class.
+
+### Directory Structure
+
+```text
 dataset/
 ├── test_data/
 ├── train_data/
@@ -65,8 +69,6 @@ dataset/
 ├── train_dataset_final.csv
 ├── train_split.csv
 └── val_split.csv
-
----
 
 ## 4. Annotation
 
