@@ -8,7 +8,6 @@
 
 ## 1. Dataset Overview
 
-<<<<<<< HEAD
 The **Road Risk Estimation Dataset** is a collection of road surface images designed for developing and evaluating an AI model for road risk estimation.
 
 The dataset is used to train a **ResNet-50** deep learning model to predict a continuous **road risk score from 0–100** using a regression approach.
@@ -29,14 +28,6 @@ The images represent various road conditions and levels of visible road damage, 
 | Task               | Regression                   |
 | Risk Score         | 0–100                        |
 | Model Architecture | ResNet-50                    |
-=======
-This dataset contains images of road surfaces used for the **Road Risk Estimation AI** project. The model (**ResNet-50**) analyzes these images to predict a risk score indicating the severity of road damage.
-
-* **Number of images:** 9,173
-* **Target Output:** Regression (Risk Score 0–100)
-* **Image Format:** JPG / PNG
-* **Image Size:** 224 × 224 pixels (RGB)
->>>>>>> da3d6518c84e4d6f12c5337847a86686043a4320
 
 ---
 
@@ -44,7 +35,6 @@ This dataset contains images of road surfaces used for the **Road Risk Estimatio
 
 Images were collected from two main sources:
 
-<<<<<<< HEAD
 * **Local images:** Collected within the Kasetsart University Kamphaeng Saen Campus.
 * **Online images:** Collected from various online platforms.
 
@@ -57,26 +47,24 @@ Combining these sources helps increase the diversity of the dataset in terms of:
 * Damage severity
 
 This diversity is intended to improve the model's ability to generalize to different road environments.
-=======
-| Level |   Score Range  | Description                                  |
-| :---: | :------------: | -------------------------------------------- |
-| **A** |  0.00 – 14.00  | Very Low Risk (Normal road condition)        |
-| **B** |  14.01 – 30.00 | Low Risk (Minor defects)                     |
-| **C** |  30.01 – 40.00 | Moderate Risk (Visible damage)               |
-| **D** |  40.01 – 50.00 | High Risk (Requires monitoring)              |
-| **F** | 50.01 – 100.00 | Critical Risk (Severe damage, urgent repair) |
->>>>>>> da3d6518c84e4d6f12c5337847a86686043a4320
 
 ---
 
 ## 3. Dataset Structure
 
-<<<<<<< HEAD
 The dataset consists of road surface images accompanied by their corresponding road risk scores.
 
 Each image represents a road condition that is assigned a continuous risk score between **0 and 100**.
 
 The dataset is intended for a **regression problem**, where the model predicts a numerical risk score rather than a discrete class.
+dataset/
+├── test_data/
+├── train_data/
+├── val_data/
+├── test_split.csv
+├── train_dataset_final.csv
+├── train_split.csv
+└── val_split.csv
 
 ---
 
@@ -186,46 +174,3 @@ For inquiries, feedback, or further information regarding this dataset, please c
 **Team:** UMA 
 **Institution:** Kasetsart University (Kamphaeng Saen Campus)
 **GitHub Repository:** `Weerixx046/Road_risk_Estimation`
-=======
-```text
-dataset/
-├── test_data/
-├── train_data/
-├── val_data/
-├── test_split.csv
-├── train_dataset_final.csv
-├── train_split.csv
-└── val_split.csv
-```
-
----
-
-## 4. Data Source
-
-Images were collected from two main sources: locally within the **Kamphaeng Saen Campus** and from various online platforms.
-
-This combination ensures diversity in lighting, road types, and damage severity.
-
----
-
-## 5. Annotation
-
-* Ground truth risk scores (0–100) were annotated by project group members.
-* Scoring is based on standard **Road Safety Assessment (RSA)** guidelines.
-
----
-
-## 6. Recommended Data Split
-
-| Subset         | Percentage |
-| :------------- | ---------: |
-| **Training**   |        80% |
-| **Validation** |        10% |
-| **Testing**    |        10% |
-
----
-
-## 7. Contact
-
-**GitHub:** https://github.com/Weerixx046
->>>>>>> da3d6518c84e4d6f12c5337847a86686043a4320
